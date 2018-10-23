@@ -168,7 +168,7 @@ func Transfer(gasPrice uint, gasLimit uint, senderWIF string, asset string, toAd
 		TxType:   types.Invoke,
 		Nonce:    uint32(time.Now().Unix()),
 		Payload:  invokePayload,
-		Sigs:     make([]*types.Sig, 0, 0),
+		Sigs:     []types.RawSig{},
 	}
 
 	signer := sender.account
@@ -202,12 +202,12 @@ func signToTransaction(tx *types.Transaction, signer *account.Account) error {
 	if err != nil {
 		return fmt.Errorf("signToData error:%s", err)
 	}
-	sig := &types.Sig{
-		PubKeys: []keypair.PublicKey{signer.PublicKey},
-		M:       1,
-		SigData: [][]byte{sigData},
+
+	sig := types.RawSig{
+		Invoke: keypair.SerializePublicKey(signer.PublicKey),
+		Verify: sigData,
 	}
-	tx.Sigs = []*types.Sig{sig}
+	tx.Sigs = []types.RawSig{sig}
 
 	return nil
 }
@@ -287,7 +287,7 @@ func WithdrawONG(gasPrice uint, gasLimit uint, endpoint string, wif string) (*Ra
 		TxType:   types.Invoke,
 		Nonce:    uint32(time.Now().Unix()),
 		Payload:  invokePayload,
-		Sigs:     make([]*types.Sig, 0, 0),
+		Sigs:     []types.RawSig{},
 	}
 
 	err = signToTransaction(tx, signer)
