@@ -16,7 +16,7 @@ import (
 	"github.com/ontio/ontology/common"
 	"github.com/ontio/ontology/core/payload"
 	"github.com/ontio/ontology/core/types"
-	httpcom "github.com/ontio/ontology/http/base/common"
+	utils "github.com/ontio/ontology/core/utils"
 	"github.com/ontio/ontology/smartcontract/service/native/ont"
 )
 
@@ -157,7 +157,7 @@ func Transfer(gasPrice uint, gasLimit uint, senderWIF string, asset string, toAd
 	gasPriceUint64 := uint64(gasPrice)
 	gasLimitUint64 := uint64(gasLimit)
 
-	invokeCode, err := httpcom.BuildNativeInvokeCode(contractAddress, cversion, method, params)
+	invokeCode, err := utils.BuildNativeInvokeCode(contractAddress, cversion, method, params)
 
 	invokePayload := &payload.InvokeCode{
 		Code: invokeCode,
@@ -273,7 +273,7 @@ func WithdrawONG(gasPrice uint, gasLimit uint, endpoint string, wif string) (*Ra
 	a, _ := common.AddressParseFromBytes(ONGContractAddress)
 	contractAddress := a
 
-	invokeCode, err := httpcom.BuildNativeInvokeCode(contractAddress, cversion, method, []interface{}{transferFrom})
+	invokeCode, err := utils.BuildNativeInvokeCode(contractAddress, cversion, method, []interface{}{transferFrom})
 	if err != nil {
 		return nil, fmt.Errorf("build invoke code error:%s", err)
 	}
