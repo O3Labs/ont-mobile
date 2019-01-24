@@ -22,7 +22,7 @@ func TestNewAccount(t *testing.T) {
 }
 
 func TestAccountFromWIF(t *testing.T) {
-	wif := ""
+	wif := ontmobile.NewONTAccount().WIF
 	account := ontmobile.ONTAccountWithWIF(wif)
 	fmt.Printf("address %v ", account.Address)
 	fmt.Printf("account %+v", account)
@@ -30,7 +30,6 @@ func TestAccountFromWIF(t *testing.T) {
 }
 
 func TestMultiSigAddress(t *testing.T) {
-
 	pri1, err := keypair.WIF2Key([]byte(""))
 	if err != nil {
 		return
@@ -62,7 +61,6 @@ func TestMultiSigAddress(t *testing.T) {
 }
 
 func TestONGContractAddress(t *testing.T) {
-
 	address, _ := common.AddressParseFromBytes(ontmobile.ONGContractAddress)
 	log.Printf("%v", address.ToBase58())
 }
@@ -78,9 +76,9 @@ func TestWithdrawONG(t *testing.T) {
 	if err != nil {
 		log.Printf("error %v", err)
 		t.Fail()
+	} else {
+		fmt.Printf("\n\ntx = %+v %x\n", raw.TXID, raw.Data)
 	}
-	fmt.Printf("\n\ntx = %+v %x\n", raw.TXID, raw.Data)
-
 }
 
 func TestGetAddressUnboundOffsetKey(t *testing.T) {
