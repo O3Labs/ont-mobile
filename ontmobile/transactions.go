@@ -7,9 +7,15 @@ import (
   "log"
   "encoding/hex"
 
-  "github.com/ontio/ontology/cmd/utils"
+  "github.com/ontio/ontology-crypto/keypair"
+  "github.com/ontio/ontology/account"
   "github.com/ontio/ontology/common"
-  httpcom "github.com/ontio/ontology/http/base/common"
+  "github.com/ontio/ontology/core/types"
+
+  cutils "github.com/ontio/ontology/core/utils"
+  "github.com/ontio/ontology/core/payload"
+  "time"
+  "github.com/ontio/ontology/vm/neovm"
 )
 
 func buildParameters(args []Parameter) ([]interface{}){
@@ -52,15 +58,13 @@ func BuildInvocationTransaction(contractHex string, operation string, args []Par
   parameters := buildParameters(args)
   params := []interface{}{operation, parameters}
 
-  tx, err := httpcom.NewNeovmInvokeTransaction(uint64(gasPrice), uint64(gasLimit), contractAddress, params)
+  tx, err := newNeovmInvokeTransaction(uint64(gasPrice), uint64(gasLimit), contractAddress, params)
   if err != nil {
       log.Printf("NewNeovmInvokeTransaction error:%s", err)
       return "", err
   }
 
-  tx.Payer = signer.Address
-
-  err = utils.SignTransaction(signer, tx)
+  err = signTransaction(tx, signer)
   if err != nil {
     log.Printf("SignTransaction error: %s", err)
     return "", err
@@ -76,10 +80,64 @@ func BuildInvocationTransaction(contractHex string, operation string, args []Par
   var buffer bytes.Buffer
   err = immutTx.Serialize(&buffer)
   if err != nil {
-    log.Printf("serialize error:%s", err)
+    log.Printf("Serialize error:%s", err)
     return "", err
   }
 
   txData := hex.EncodeToString(buffer.Bytes())
   return txData, nil
+}
+
+func signTransaction(tx *types.MutableTransaction, signer *account.Account) error {
+	if tx.Payer == common.ADDRESS_EMPTY {
+		tx.Payer = signer.Address
+	}
+	txHash := tx.Hash()
+
+  sigData, err := signToData(txHash.ToArray(), signer)
+  if err != nil {
+    return fmt.Errorf("signToData error:%s", err)
+  }
+
+  tx.Sigs = append(tx.Sigs, types.Sig{
+    PubKeys: []keypair.PublicKey{signer.PublicKey},
+    M:       1,
+    SigData: [][]byte{sigData},
+  })
+
+	return nil
+}
+
+func newNeovmInvokeTransaction(gasPrice, gasLimit uint64, contractAddress common.Address, params []interface{}) (*types.MutableTransaction, error) {
+	invokeCode, err := buildNeoVMInvokeCode(contractAddress, params)
+	if err != nil {
+		return nil, err
+	}
+	return newSmartContractTransaction(gasPrice, gasLimit, invokeCode)
+}
+
+func buildNeoVMInvokeCode(smartContractAddress common.Address, params []interface{}) ([]byte, error) {
+	builder := neovm.NewParamsBuilder(new(bytes.Buffer))
+	err := cutils.BuildNeoVMParam(builder, params)
+	if err != nil {
+		return nil, err
+	}
+	args := append(builder.ToArray(), 0x67)
+	args = append(args, smartContractAddress[:]...)
+	return args, nil
+}
+
+func newSmartContractTransaction(gasPrice, gasLimit uint64, invokeCode []byte) (*types.MutableTransaction, error) {
+	invokePayload := &payload.InvokeCode{
+		Code: invokeCode,
+	}
+	tx := &types.MutableTransaction{
+		GasPrice: gasPrice,
+		GasLimit: gasLimit,
+		TxType:   types.Invoke,
+		Nonce:    uint32(time.Now().Unix()),
+		Payload:  invokePayload,
+		Sigs:     nil,
+	}
+	return tx, nil
 }

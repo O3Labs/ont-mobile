@@ -8,23 +8,6 @@ import (
   "github.com/o3labs/ont-mobile/ontmobile/ontrpc"
 )
 
-func TestTransfer(t *testing.T){
-  account := ont.NewONTAccount()
-  wif := account.WIF
-  address := account.Address
-
-  gasPrice := uint(500)
-  gasLimit := uint(20000)
-
-  tx, err := ont.Transfer(gasPrice, gasLimit, wif, "ONG", address, 1)
-  if err != nil {
-    log.Printf("Error creating transfer transaction: %s", err)
-    t.Fail()
-  } else {
-    log.Printf("Transaction ID: %s\nData: %v", tx.TXID, tx.Data)
-  }
-}
-
 func TestBuildTransaction(t *testing.T){
   wif := ""
   account := ont.ONTAccountWithWIF(wif)
