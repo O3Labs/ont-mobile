@@ -14,7 +14,6 @@ import (
 	sig "github.com/ontio/ontology-crypto/signature"
 	"github.com/ontio/ontology/account"
 	"github.com/ontio/ontology/common"
-	"github.com/ontio/ontology/core/payload"
 	"github.com/ontio/ontology/core/types"
 	"github.com/ontio/ontology/core/utils"
 	"github.com/ontio/ontology/smartcontract/service/native/ont"
@@ -96,7 +95,6 @@ type RawTransaction struct {
 }
 
 func Transfer(gasPrice uint, gasLimit uint, senderWIF string, asset string, toAddress string, amount float64) (*RawTransaction, error) {
-
 	if amount <= 0 {
 		return nil, fmt.Errorf("Amount must be greater than zero")
 	}
@@ -122,11 +120,11 @@ func Transfer(gasPrice uint, gasLimit uint, senderWIF string, asset string, toAd
 	if err != nil {
 		return nil, err
 	}
+
 	to, err := common.AddressFromBase58(toAddress)
 	if err != nil {
 		return nil, err
 	}
-	log.Printf("%v %v", from, to)
 
 	var contractAddress common.Address
 
@@ -141,7 +139,7 @@ func Transfer(gasPrice uint, gasLimit uint, senderWIF string, asset string, toAd
 		contractAddress = a
 		value = uint64(RoundFixed(amount, ONGDECIMALS) * float64(math.Pow10(ONGDECIMALS)))
 	default:
-		return nil, fmt.Errorf("asset:%s not equal ont or ong", asset)
+		return nil, fmt.Errorf("%s is neither ONT nor ONG", asset)
 	}
 
 	var sts []*ont.State
@@ -159,16 +157,14 @@ func Transfer(gasPrice uint, gasLimit uint, senderWIF string, asset string, toAd
 
 	invokeCode, err := utils.BuildNativeInvokeCode(contractAddress, cversion, method, params)
 
-	invokePayload := &payload.InvokeCode{
-		Code: invokeCode,
-	}
-	tx := &types.Transaction{
-		GasPrice: gasPriceUint64,
-		GasLimit: gasLimitUint64,
-		TxType:   types.Invoke,
-		Nonce:    uint32(time.Now().Unix()),
-		Payload:  invokePayload,
-		Sigs:     []types.RawSig{},
+	mutableTx := utils.NewInvokeTransaction(invokeCode)
+	mutableTx.GasPrice = gasPriceUint64
+	mutableTx.GasLimit = gasLimitUint64
+	mutableTx.Nonce = uint32(time.Now().Unix())
+
+	tx, err := mutableTx.IntoImmutable()
+	if err != nil {
+		return nil, fmt.Errorf("[Failed to convert tx to immutable: %s]", err)
 	}
 
 	signer := sender.account
@@ -277,17 +273,14 @@ func WithdrawONG(gasPrice uint, gasLimit uint, endpoint string, wif string) (*Ra
 	if err != nil {
 		return nil, fmt.Errorf("build invoke code error:%s", err)
 	}
-	invokePayload := &payload.InvokeCode{
-		Code: invokeCode,
-	}
 
-	tx := &types.Transaction{
-		GasPrice: gasPriceUint64,
-		GasLimit: gasLimitUint64,
-		TxType:   types.Invoke,
-		Nonce:    uint32(time.Now().Unix()),
-		Payload:  invokePayload,
-		Sigs:     []types.RawSig{},
+	mutableTx := utils.NewInvokeTransaction(invokeCode)
+	mutableTx.GasPrice = gasPriceUint64
+	mutableTx.GasLimit = gasLimitUint64
+	mutableTx.Nonce = uint32(time.Now().Unix())
+	tx, err := mutableTx.IntoImmutable()
+	if err != nil {
+		return nil, fmt.Errorf("[Failed to convert tx to immutable: %s]", err)
 	}
 
 	err = signToTransaction(tx, signer)
