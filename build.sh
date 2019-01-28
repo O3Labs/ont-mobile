@@ -9,4 +9,4 @@ mkdir output/android/
 echo "Building for iOS..."
 CGO_CFLAGS_ALLOW='-fmodules|-fblocks' gomobile bind -target=ios -o=output/ios/ontmobile.framework github.com/o3labs/ont-mobile/ontmobile
 echo "Building for Android..."
-ANDROID_HOME=/Users/apisit/Library/Android/sdk gomobile bind -target=android -o=output/android/neoutils.aar github.com/o3labs/neo-utils/neoutils
+ANDROID_HOME=/Users/$USER/Library/Android/sdk gomobile bind -target=android -o=output/android/ontmobile.aar github.com/o3labs/ont-mobile/ontmobile
