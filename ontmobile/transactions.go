@@ -6,6 +6,7 @@ import (
   "math"
   "log"
   "encoding/hex"
+  "encoding/json"
 
   "github.com/ontio/ontology-crypto/keypair"
   "github.com/ontio/ontology/account"
@@ -18,27 +19,41 @@ import (
   "github.com/ontio/ontology/vm/neovm"
 )
 
-func buildParameters(args []Parameter) ([]interface{}){
-  var parameters []interface{}
-  var err error
+type ParameterJSONArrayForm struct {
+	A []ParameterJSONForm `json:"array"`
+}
 
-  for _, element := range args {
-    var t = element.Type
-    var v = element.Value
+type ParameterJSONForm struct {
+	T string `json:"type"`
+	V interface{} `json:"value"`
+}
+
+func buildParameters(argString string) ([]interface{}){
+  var parameters []interface{}
+
+  data := &ParameterJSONArrayForm{
+    A: []ParameterJSONForm{},
+  }
+
+  err := json.Unmarshal([]byte(argString), data)
+
+  for _, element := range data.A {
+    var t = element.T
+    var v = element.V
     var p interface{}
-    if t == Address {
+    if t == "Address" {
       p, err = common.AddressFromBase58(v.(string))
       if err != nil {
         log.Printf("Failed to convert string to address %s", err)
       }
-    } else if t == String {
+    } else if t == "String" {
       p = v.(string)
-    } else if t == Integer {
+    } else if t == "Integer" {
       p = v.(uint)
-    } else if t == Fixed8 {
+    } else if t == "Fixed8" {
       p = uint64(RoundFixed(v.(float64), ONGDECIMALS) * float64(math.Pow10(ONGDECIMALS)))
-    } else if t == Array {
-      p = buildParameters(v.([]Parameter))
+    } else if t == "Array" {
+      p = buildParameters(v.(string))
     }
     parameters = append(parameters, p)
   }
@@ -47,7 +62,7 @@ func buildParameters(args []Parameter) ([]interface{}){
 }
 
 // BuildInvocationTransaction : creates a raw transaction
-func BuildInvocationTransaction(contractHex string, operation string, args []Parameter, gasPrice uint, gasLimit uint, wif string) (string, error) {
+func BuildInvocationTransaction(contractHex string, operation string, argString string, gasPrice uint, gasLimit uint, wif string) (string, error) {
   var contractAddress common.Address
   contractAddress, err := common.AddressFromHexString(contractHex)
   if err != nil {
@@ -55,7 +70,7 @@ func BuildInvocationTransaction(contractHex string, operation string, args []Par
   }
 
   signer := ONTAccountWithWIF(wif).account
-  parameters := buildParameters(args)
+  parameters := buildParameters(argString)
   params := []interface{}{operation, parameters}
 
   tx, err := newNeovmInvokeTransaction(uint64(gasPrice), uint64(gasLimit), contractAddress, params)

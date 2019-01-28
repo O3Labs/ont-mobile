@@ -3,6 +3,7 @@ package ontmobile_test
 import (
   "log"
   "testing"
+  "encoding/json"
 
   ont "github.com/o3labs/ont-mobile/ontmobile"
   "github.com/o3labs/ont-mobile/ontmobile/ontrpc"
@@ -13,15 +14,17 @@ func TestBuildTransaction(t *testing.T){
   account := ont.ONTAccountWithWIF(wif)
   address := account.Address
 
-  addr := ont.Parameter{ont.Address, address}
-  val := ont.Parameter{ont.String, "Hi there"}
+  addr := ont.ParameterJSONForm{T: "Address", V: address}
+  val := ont.ParameterJSONForm{T: "String", V: "Hi there"}
 
-  args := []ont.Parameter{addr, val}
+  jsondat := &ont.ParameterJSONArrayForm{A: []ont.ParameterJSONForm{addr, val}}
+  argData, _ := json.Marshal(jsondat)
+  argString := string(argData)
 
   gasPrice := uint(500)
   gasLimit := uint(20000)
 
-  txData, err := ont.BuildInvocationTransaction("c168e0fb1a2bddcd385ad013c2c98358eca5d4dc", "put", args, gasPrice, gasLimit, wif)
+  txData, err := ont.BuildInvocationTransaction("c168e0fb1a2bddcd385ad013c2c98358eca5d4dc", "put", argString, gasPrice, gasLimit, wif)
   if err != nil {
     log.Printf("Error creating invocation transaction: %s", err)
     t.Fail()
