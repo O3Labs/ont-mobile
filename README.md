@@ -11,8 +11,11 @@ go get github.com/O3Labs/ont-mobile/ontmobile
 ## Compile this library to native mobile frameworks.
 
 ### Install gomobile
-`go get golang.org/x/mobile/cmd/gomobile`  
-`gomobile init`  
+```
+go get golang.org/x/mobile/cmd/gomobile
+
+gomobile init
+```  
 
 ### Install Dependencies
 ```
