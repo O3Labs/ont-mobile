@@ -1,91 +1,106 @@
 package ontmobile
 
 import (
-  "bytes"
-  "fmt"
-  "math"
-  "log"
-  "encoding/hex"
+	"bytes"
+	"encoding/hex"
+	"encoding/json"
+	"fmt"
+	"log"
+	"math"
 
-  "github.com/ontio/ontology-crypto/keypair"
-  "github.com/ontio/ontology/account"
-  "github.com/ontio/ontology/common"
-  "github.com/ontio/ontology/core/types"
+	"github.com/ontio/ontology-crypto/keypair"
+	"github.com/ontio/ontology/account"
+	"github.com/ontio/ontology/common"
+	"github.com/ontio/ontology/core/types"
 
-  cutils "github.com/ontio/ontology/core/utils"
-  "github.com/ontio/ontology/core/payload"
-  "time"
-  "github.com/ontio/ontology/vm/neovm"
+	"github.com/ontio/ontology/core/payload"
+	cutils "github.com/ontio/ontology/core/utils"
+	"github.com/ontio/ontology/vm/neovm"
+	"time"
 )
 
-func buildParameters(args []Parameter) ([]interface{}){
-  var parameters []interface{}
-  var err error
+type ParameterJSONArrayForm struct {
+	A []ParameterJSONForm `json:"array"`
+}
 
-  for _, element := range args {
-    var t = element.Type
-    var v = element.Value
-    var p interface{}
-    if t == Address {
-      p, err = common.AddressFromBase58(v.(string))
-      if err != nil {
-        log.Printf("Failed to convert string to address %s", err)
-      }
-    } else if t == String {
-      p = v.(string)
-    } else if t == Integer {
-      p = v.(uint)
-    } else if t == Fixed8 {
-      p = uint64(RoundFixed(v.(float64), ONGDECIMALS) * float64(math.Pow10(ONGDECIMALS)))
-    } else if t == Array {
-      p = buildParameters(v.([]Parameter))
-    }
-    parameters = append(parameters, p)
-  }
+type ParameterJSONForm struct {
+	T string      `json:"type"`
+	V interface{} `json:"value"`
+}
 
-  return parameters
+func buildParameters(argString string) []interface{} {
+	var parameters []interface{}
+
+	data := &ParameterJSONArrayForm{
+		A: []ParameterJSONForm{},
+	}
+
+	err := json.Unmarshal([]byte(argString), data)
+
+	for _, element := range data.A {
+		var t = element.T
+		var v = element.V
+		var p interface{}
+		if t == "Address" {
+			p, err = common.AddressFromBase58(v.(string))
+			if err != nil {
+				log.Printf("Failed to convert string to address %s", err)
+			}
+		} else if t == "String" {
+			p = v.(string)
+		} else if t == "Integer" {
+			p = v.(uint)
+		} else if t == "Fixed8" {
+			p = uint64(RoundFixed(v.(float64), ONGDECIMALS) * float64(math.Pow10(ONGDECIMALS)))
+		} else if t == "Array" {
+			p = buildParameters(v.(string))
+		}
+		parameters = append(parameters, p)
+	}
+
+	return parameters
 }
 
 // BuildInvocationTransaction : creates a raw transaction
-func BuildInvocationTransaction(contractHex string, operation string, args []Parameter, gasPrice uint, gasLimit uint, wif string) (string, error) {
-  var contractAddress common.Address
-  contractAddress, err := common.AddressFromHexString(contractHex)
-  if err != nil {
-    return "", fmt.Errorf("[Invalid contract hash error: %s]", err)
-  }
+func BuildInvocationTransaction(contractHex string, operation string, argString string, gasPrice uint, gasLimit uint, wif string) (string, error) {
+	var contractAddress common.Address
+	contractAddress, err := common.AddressFromHexString(contractHex)
+	if err != nil {
+		return "", fmt.Errorf("[Invalid contract hash error: %s]", err)
+	}
 
-  signer := ONTAccountWithWIF(wif).account
-  parameters := buildParameters(args)
-  params := []interface{}{operation, parameters}
+	signer := ONTAccountWithWIF(wif).account
+	parameters := buildParameters(argString)
+	params := []interface{}{operation, parameters}
 
-  tx, err := newNeovmInvokeTransaction(uint64(gasPrice), uint64(gasLimit), contractAddress, params)
-  if err != nil {
-      log.Printf("NewNeovmInvokeTransaction error:%s", err)
-      return "", err
-  }
+	tx, err := newNeovmInvokeTransaction(uint64(gasPrice), uint64(gasLimit), contractAddress, params)
+	if err != nil {
+		log.Printf("NewNeovmInvokeTransaction error:%s", err)
+		return "", err
+	}
 
-  err = signTransaction(tx, signer)
-  if err != nil {
-    log.Printf("SignTransaction error: %s", err)
-    return "", err
-  }
+	err = signTransaction(tx, signer)
+	if err != nil {
+		log.Printf("SignTransaction error: %s", err)
+		return "", err
+	}
 
-  immutTx, err := tx.IntoImmutable()
+	immutTx, err := tx.IntoImmutable()
 
-  if err != nil {
-    log.Printf("IntoImmutable error: %s", err)
-    return "", err
-  }
+	if err != nil {
+		log.Printf("IntoImmutable error: %s", err)
+		return "", err
+	}
 
-  var buffer bytes.Buffer
-  err = immutTx.Serialize(&buffer)
-  if err != nil {
-    log.Printf("Serialize error:%s", err)
-    return "", err
-  }
+	var buffer bytes.Buffer
+	err = immutTx.Serialize(&buffer)
+	if err != nil {
+		log.Printf("Serialize error:%s", err)
+		return "", err
+	}
 
-  txData := hex.EncodeToString(buffer.Bytes())
-  return txData, nil
+	txData := hex.EncodeToString(buffer.Bytes())
+	return txData, nil
 }
 
 func signTransaction(tx *types.MutableTransaction, signer *account.Account) error {
@@ -94,16 +109,16 @@ func signTransaction(tx *types.MutableTransaction, signer *account.Account) erro
 	}
 	txHash := tx.Hash()
 
-  sigData, err := signToData(txHash.ToArray(), signer)
-  if err != nil {
-    return fmt.Errorf("signToData error:%s", err)
-  }
+	sigData, err := signToData(txHash.ToArray(), signer)
+	if err != nil {
+		return fmt.Errorf("signToData error:%s", err)
+	}
 
-  tx.Sigs = append(tx.Sigs, types.Sig{
-    PubKeys: []keypair.PublicKey{signer.PublicKey},
-    M:       1,
-    SigData: [][]byte{sigData},
-  })
+	tx.Sigs = append(tx.Sigs, types.Sig{
+		PubKeys: []keypair.PublicKey{signer.PublicKey},
+		M:       1,
+		SigData: [][]byte{sigData},
+	})
 
 	return nil
 }
