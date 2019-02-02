@@ -15,6 +15,10 @@ type RPCInterface interface {
 	GetSmartCodeEvent(txHash string) (GetSmartCodeEventResponse, error)
 	SendRawTransaction(rawTransactionHex string) (SendRawTransactionResponse, error)
 	GetUnboundONG(ontAddress string) (GetUnboundONGResponse, error)
+	GetStorage(scriptHash string, key string) (GetStorageResponse, error)
+	GetRawTransaction(txID string) (GetRawTransactionResponse, error)
+	GetBlockWithHash(blockHash string) (GetBlockResponse, error)
+	GetBlockWithHeight(blockHeight int) (GetBlockResponse, error)
 }
 
 type RPCClient struct {
@@ -105,6 +109,46 @@ func (n *RPCClient) GetUnboundONG(ontAddress string) (GetUnboundONGResponse, err
 	response := GetUnboundONGResponse{}
 	params := []interface{}{ontAddress}
 	err := n.makeRequest("getunboundong", params, &response)
+	if err != nil {
+		return response, err
+	}
+	return response, nil
+}
+
+func (n *RPCClient) GetStorage(scriptHash string, key string) (GetStorageResponse, error) {
+	response := GetStorageResponse{}
+	params := []interface{}{scriptHash, key}
+	err := n.makeRequest("getstorage", params, &response)
+	if err != nil {
+		return response, err
+	}
+	return response, nil
+}
+
+func (n *RPCClient) GetRawTransaction(txID string) (GetRawTransactionResponse, error) {
+	response := GetRawTransactionResponse{}
+	params := []interface{}{txID}
+	err := n.makeRequest("getrawtransaction", params, &response)
+	if err != nil {
+		return response, err
+	}
+	return response, nil
+}
+
+func (n *RPCClient) GetBlockWithHash(blockHash string) (GetBlockResponse, error) {
+	response := GetBlockResponse{}
+	params := []interface{}{blockHash}
+	err := n.makeRequest("getblock", params, &response)
+	if err != nil {
+		return response, err
+	}
+	return response, nil
+}
+
+func (n *RPCClient) GetBlockWithHeight(blockHeight int) (GetBlockResponse, error) {
+	response := GetBlockResponse{}
+	params := []interface{}{blockHeight}
+	err := n.makeRequest("getblock", params, &response)
 	if err != nil {
 		return response, err
 	}

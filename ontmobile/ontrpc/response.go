@@ -48,3 +48,18 @@ type SendRawTransactionResponse struct {
 	// } `json:"result"`
 	Result string `json:"result"`
 }
+
+type GetStorageResponse struct {
+	JSONRPCResponse
+	Result string `json:"result"`
+}
+
+type GetRawTransactionResponse struct {
+	JSONRPCResponse
+	Result string `json:"result"`
+}
+
+type GetBlockResponse struct {
+	JSONRPCResponse
+	Result string `json:"result"`
+}
