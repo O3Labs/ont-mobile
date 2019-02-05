@@ -108,7 +108,7 @@ func BuildInvocationTransaction(contractHex string, operation string, argString 
 func signTransaction(tx *types.MutableTransaction, signer *account.Account, payer string) error {
 	if tx.Payer == common.ADDRESS_EMPTY {
 		addr, err := common.AddressFromBase58(payer)
-		if err != nil {
+		if err == nil {
 			tx.Payer = addr
 		}
 	}
