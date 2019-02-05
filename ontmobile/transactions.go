@@ -64,7 +64,7 @@ func buildParameters(argString string) []interface{} {
 }
 
 // BuildInvocationTransaction : creates a raw transaction
-func BuildInvocationTransaction(contractHex string, operation string, argString string, gasPrice uint, gasLimit uint, wif string) (string, error) {
+func BuildInvocationTransaction(contractHex string, operation string, argString string, gasPrice uint, gasLimit uint, wif string, payer string) (string, error) {
 	var contractAddress common.Address
 	contractAddress, err := common.AddressFromHexString(contractHex)
 	if err != nil {
@@ -81,7 +81,7 @@ func BuildInvocationTransaction(contractHex string, operation string, argString 
 		return "", err
 	}
 
-	err = signTransaction(tx, signer)
+	err = signTransaction(tx, signer, payer)
 	if err != nil {
 		log.Printf("SignTransaction error: %s", err)
 		return "", err
@@ -105,9 +105,12 @@ func BuildInvocationTransaction(contractHex string, operation string, argString 
 	return txData, nil
 }
 
-func signTransaction(tx *types.MutableTransaction, signer *account.Account) error {
+func signTransaction(tx *types.MutableTransaction, signer *account.Account, payer string) error {
 	if tx.Payer == common.ADDRESS_EMPTY {
-		tx.Payer = signer.Address
+		addr, err := common.AddressFromBase58(payer)
+		if err != nil {
+			tx.Payer = addr
+		}
 	}
 	txHash := tx.Hash()
 
