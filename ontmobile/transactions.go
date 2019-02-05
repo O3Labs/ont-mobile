@@ -49,7 +49,7 @@ func buildParameters(argString string) []interface{} {
 		} else if t == "String" {
 			p = v.(string)
 		} else if t == "Integer" {
-			p = v.(uint)
+			p = uint(v.(float64))
 		} else if t == "Fixed8" {
 			p = uint64(RoundFixed(v.(float64), ONGDECIMALS) * float64(math.Pow10(ONGDECIMALS)))
 		} else if t == "Array" {
