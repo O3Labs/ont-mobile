@@ -70,6 +70,23 @@ func ONTAddressFromPublicKey(publicKeyBytes []byte) string {
 	return address.ToBase58()
 }
 
+func ONTAccountWithPrivateKey(privateKeyBytes []byte) *ONTAccount {
+	pri, err := keypair.DeserializePrivateKey(privateKeyBytes)
+	if err != nil {
+		return nil
+	}
+	pub := pri.Public()
+	address := types.AddressFromPubKey(pub)
+	account := &account.Account{
+		SigScheme:  sig.SHA256withECDSA,
+		PrivateKey: pri,
+		PublicKey:  pub,
+		Address:    address,
+	}
+
+	return accountToLocalAccount(account)
+}
+
 func ONTAccountWithWIF(wif string) *ONTAccount {
 	var err error
 
