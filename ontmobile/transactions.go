@@ -70,8 +70,11 @@ func BuildInvocationTransaction(contractHex string, operation string, argString 
 	if err != nil {
 		return "", fmt.Errorf("[Invalid contract hash error: %s]", err)
 	}
-
-	signer := ONTAccountWithWIF(wif).account
+	account := ONTAccountWithWIF(wif)
+	if account == nil {
+		return "", fmt.Errorf("[Invalid wif]")
+	}
+	signer := account.account
 	parameters := buildParameters(argString)
 	params := []interface{}{operation, parameters}
 
