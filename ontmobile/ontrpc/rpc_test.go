@@ -8,6 +8,7 @@ import (
 )
 
 func TestGetONTBalance(t *testing.T) {
+	log.Printf("TestGetONTBalance")
 	client := ontrpc.NewRPCClient("http://polaris2.ont.io:20336")
 	response, err := client.GetBalance("AULUHtmLSATxrJPMGoiWrgWyCKfzTkwEV2")
 	if err != nil {
@@ -17,19 +18,19 @@ func TestGetONTBalance(t *testing.T) {
 }
 
 func TestGetBlockCount(t *testing.T) {
-	log.Printf("test hello")
+	log.Printf("TestGetBlockCount")
 	client := ontrpc.NewRPCClient("http://polaris2.ont.io:20336")
 	response, err := client.GetBlockCount()
 	if err != nil {
 		t.Fail()
 	}
-
-	t.Logf("%v", response)
+	log.Printf("%v", response)
 }
 
 func TestGetSmartCodeEvent(t *testing.T) {
+	log.Printf("TestGetSmartCodeEvent")
 	client := ontrpc.NewRPCClient("http://polaris2.ont.io:20336")
-	response, err := client.GetSmartCodeEvent("8bd07b3f78c1b57f7a839d964e5faccdaf7eb1e4c24b164bb65184e73345c028")
+	response, err := client.GetSmartCodeEvent("41ee265bf50952cd0445d0f612bf2574af523b741c9cc82617bd27c0f7404b14")
 	if err != nil {
 		t.Fail()
 	}
@@ -37,6 +38,7 @@ func TestGetSmartCodeEvent(t *testing.T) {
 }
 
 func TestGetUnboundONG(t *testing.T) {
+	log.Printf("TestGetUnboundONG")
 	client := ontrpc.NewRPCClient("http://dappnode2.ont.io:20336")
 	response, err := client.GetUnboundONG("AeNkbJdiMx49kBStQdDih7BzfDwyTNVRfb")
 	if err != nil {
