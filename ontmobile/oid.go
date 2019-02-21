@@ -34,7 +34,7 @@ func MakeRegister(gasPrice uint, gasLimit uint, ontidWif string, payerWif string
 
 	cversion := byte(0)
 	method := "regIDWithPublicKey"
-	structs := []interface{}{[]byte(ontid), ontidAccount.PublicKey}
+	structs := []interface{}{ontid, ontidAccount.PublicKey}
 	params := []interface{}{structs}
 
 	mutableTx, err := newNativeInvokeTransaction(uint64(gasPrice), uint64(gasLimit), contractAddress, cversion, method, params)
