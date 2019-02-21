@@ -80,7 +80,7 @@ func BuildInvocationTransaction(contractHex string, operation string, argString 
 
 	tx, err := newNeovmInvokeTransaction(uint64(gasPrice), uint64(gasLimit), contractAddress, params)
 	if err != nil {
-		log.Printf("NewNeovmInvokeTransaction error:%s", err)
+		log.Printf("NewNeovmInvokeTransaction error: %s", err)
 		return "", err
 	}
 
@@ -136,7 +136,7 @@ func newNeovmInvokeTransaction(gasPrice, gasLimit uint64, contractAddress common
 	if err != nil {
 		return nil, err
 	}
-	return newSmartContractTransaction(gasPrice, gasLimit, invokeCode)
+	return NewSmartContractTransaction(gasPrice, gasLimit, invokeCode)
 }
 
 func buildNeoVMInvokeCode(smartContractAddress common.Address, params []interface{}) ([]byte, error) {
@@ -150,7 +150,7 @@ func buildNeoVMInvokeCode(smartContractAddress common.Address, params []interfac
 	return args, nil
 }
 
-func newSmartContractTransaction(gasPrice, gasLimit uint64, invokeCode []byte) (*types.MutableTransaction, error) {
+func NewSmartContractTransaction(gasPrice, gasLimit uint64, invokeCode []byte) (*types.MutableTransaction, error) {
 	invokePayload := &payload.InvokeCode{
 		Code: invokeCode,
 	}
