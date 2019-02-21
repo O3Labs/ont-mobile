@@ -14,6 +14,7 @@ type RPCInterface interface {
 	GetBalance(ontAddress string) (GetBalanceResponse, error)
 	GetSmartCodeEvent(txHash string) (GetSmartCodeEventResponse, error)
 	SendRawTransaction(rawTransactionHex string) (SendRawTransactionResponse, error)
+	SendPreExecRawTransaction(rawTransactionHex string) (SendPreExecRawTransactionResponse, error)
 	GetUnboundONG(ontAddress string) (GetUnboundONGResponse, error)
 	GetStorage(scriptHash string, key string) (GetStorageResponse, error)
 	GetRawTransaction(txID string) (GetRawTransactionResponse, error)
@@ -98,6 +99,16 @@ func (n *RPCClient) GetSmartCodeEvent(txHash string) (GetSmartCodeEventResponse,
 func (n *RPCClient) SendRawTransaction(rawTransactionHex string) (SendRawTransactionResponse, error) {
 	response := SendRawTransactionResponse{}
 	params := []interface{}{rawTransactionHex}
+	err := n.makeRequest("sendrawtransaction", params, &response)
+	if err != nil {
+		return response, err
+	}
+	return response, nil
+}
+
+func (n *RPCClient) SendPreExecRawTransaction(rawTransactionHex string) (SendPreExecRawTransactionResponse, error) {
+	response := SendPreExecRawTransactionResponse{}
+	params := []interface{}{rawTransactionHex, 1}
 	err := n.makeRequest("sendrawtransaction", params, &response)
 	if err != nil {
 		return response, err
