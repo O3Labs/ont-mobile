@@ -15,6 +15,11 @@ import (
 
 var OIDContractAddress = []byte{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03}
 
+type regIDWithPublicKey struct {
+	OntId  string
+	PubKey []byte
+}
+
 func MakeRegister(gasPrice uint, gasLimit uint, ontidWif string, payerWif string) (string, error) {
 	ontidAccount := ONTAccountWithWIF(ontidWif)
 	if ontidAccount == nil {
@@ -34,8 +39,12 @@ func MakeRegister(gasPrice uint, gasLimit uint, ontidWif string, payerWif string
 
 	cversion := byte(0)
 	method := "regIDWithPublicKey"
-	structs := []interface{}{ontid, ontidAccount.PublicKey}
-	params := []interface{}{structs}
+	params := []interface{}{
+		&regIDWithPublicKey{
+			OntId:  ontid,
+			PubKey: ontidAccount.PublicKey,
+		},
+	}
 
 	mutableTx, err := newNativeInvokeTransaction(uint64(gasPrice), uint64(gasLimit), contractAddress, cversion, method, params)
 	if err != nil {
