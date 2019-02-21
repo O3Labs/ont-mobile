@@ -67,6 +67,35 @@ func MakeRegister(gasPrice uint, gasLimit uint, ontidWif string, payerWif string
 	return txData, nil
 }
 
+func BuildGetDDO(ontid string) (string, error) {
+	contractAddress, _ := common.AddressParseFromBytes(OIDContractAddress)
+
+	cversion := byte(0)
+	method := "getDDO"
+	params := []interface{}{ontid}
+
+	mutableTx, err := newNativeInvokeTransaction(0, 0, contractAddress, cversion, method, params)
+	if err != nil {
+		log.Printf("NewNativeInvokeTransaction error: %s", err)
+		return "", err
+	}
+
+	tx, err := mutableTx.IntoImmutable()
+	if err != nil {
+		return "", fmt.Errorf("[Failed to convert tx to immutable: %s]", err)
+	}
+
+	var buffer bytes.Buffer
+	err = tx.Serialize(&buffer)
+	if err != nil {
+		log.Printf("Serialize error:%s", err)
+		return "", err
+	}
+
+	txData := hex.EncodeToString(buffer.Bytes())
+	return txData, nil
+}
+
 func newNativeInvokeTransaction(gasPrice uint64, gasLimit uint64, contractAddress common.Address, version byte,
 	method string, params []interface{}) (*types.MutableTransaction, error) {
 	invokeCode, err := cutils.BuildNativeInvokeCode(contractAddress, version, method, params)
