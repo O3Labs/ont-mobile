@@ -246,6 +246,15 @@ func SendRawTransaction(endpoint string, rawTransactionHex string) (string, erro
 	return response.Result, nil
 }
 
+func SendPreExecRawTransaction(endpoint string, rawTransactionHex string) (string, error) {
+	client := ontrpc.NewRPCClient(endpoint)
+	response, err := client.SendPreExecRawTransaction(rawTransactionHex)
+	if err != nil {
+		return "", err
+	}
+	return response.Result.Result, nil
+}
+
 func WithdrawONG(gasPrice uint, gasLimit uint, endpoint string, wif string) (*RawTransaction, error) {
 
 	sender := ONTAccountWithWIF(wif)
