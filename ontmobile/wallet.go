@@ -63,7 +63,7 @@ func NewONTAccount() *ONTAccount {
 
 func ONTAddressFromPublicKey(publicKeyBytes []byte) string {
 	publicKey, err := keypair.DeserializePublicKey(publicKeyBytes)
-	if err != nil {
+	if err != nil || publicKey == nil {
 		return ""
 	}
 	address := types.AddressFromPubKey(publicKey)
@@ -72,7 +72,7 @@ func ONTAddressFromPublicKey(publicKeyBytes []byte) string {
 
 func ONTAccountWithPrivateKey(privateKeyBytes []byte) *ONTAccount {
 	pri, err := keypair.DeserializePrivateKey(privateKeyBytes)
-	if err != nil {
+	if err != nil || pri == nil {
 		return nil
 	}
 	pub := pri.Public()
@@ -91,7 +91,7 @@ func ONTAccountWithWIF(wif string) *ONTAccount {
 	var err error
 
 	pri, err := keypair.WIF2Key([]byte(wif))
-	if err != nil {
+	if err != nil || pri == nil {
 		return nil
 	}
 	pub := pri.Public()
