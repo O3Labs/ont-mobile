@@ -201,23 +201,6 @@ func Transfer(gasPrice uint, gasLimit uint, senderWIF string, asset string, toAd
 	return raw, nil
 }
 
-func signToTransaction(tx *types.Transaction, signer *account.Account) error {
-	tx.Payer = signer.Address
-	txHash := tx.Hash()
-	sigData, err := signToData(txHash.ToArray(), signer)
-	if err != nil {
-		return fmt.Errorf("signToData error:%s", err)
-	}
-
-	sig := types.RawSig{
-		Invoke: keypair.SerializePublicKey(signer.PublicKey),
-		Verify: sigData,
-	}
-	tx.Sigs = []types.RawSig{sig}
-
-	return nil
-}
-
 func signToData(data []byte, signer *account.Account) ([]byte, error) {
 	s, err := sig.Sign(signer.SigScheme, signer.PrivateKey, data, nil)
 	if err != nil {

@@ -43,7 +43,7 @@ func TestSerializeInvoke(t *testing.T) {
 
 	err = utils.SignTransaction(signer.account, tx)
 	if err != nil {
-		log.Printf("signToTransaction error:%s", err)
+		log.Printf("SignTransaction error:%s", err)
 		return
 	}
 
