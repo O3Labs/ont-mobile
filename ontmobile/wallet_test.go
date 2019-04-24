@@ -66,13 +66,30 @@ func TestONGContractAddress(t *testing.T) {
 }
 
 func TestWithdrawONG(t *testing.T) {
+	//TODO delete this
 	wif := ""
 
 	gasPrice := uint(500)
 	gasLimit := uint(20000)
-	endpoint := "http://dappnode2.ont.io:20336"
+	endpoint := "http://dappnode1.ont.io:20336"
 
 	raw, err := ontmobile.WithdrawONG(gasPrice, gasLimit, endpoint, wif)
+	if err != nil {
+		log.Printf("error %v", err)
+		t.Fail()
+	} else {
+		fmt.Printf("\n\ntx = %+v %x\n", raw.TXID, raw.Data)
+	}
+}
+
+func TestTransferONT(t *testing.T) {
+	//TODO delete this
+	wif := ""
+
+	gasPrice := uint(500)
+	gasLimit := uint(20000)
+
+	raw, err := ontmobile.Transfer(gasPrice, gasLimit, wif, "ONT", "ASi48wqdF9avm91pWwdphcAmaDJQkPNdNt", 1)
 	if err != nil {
 		log.Printf("error %v", err)
 		t.Fail()
