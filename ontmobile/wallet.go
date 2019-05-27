@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"log"
 	"math"
-	"math/rand"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/o3labs/ont-mobile/ontmobile/ontrpc"
 	"github.com/ontio/ontology-crypto/keypair"
@@ -169,7 +169,7 @@ func Transfer(gasPrice uint, gasLimit uint, senderWIF string, asset string, toAd
 		GasPrice: gasPriceUint64,
 		GasLimit: gasLimitUint64,
 		TxType:   types.Invoke,
-		Nonce:    rand.Uint32(),
+		Nonce:    uint32(time.Now().Unix()),
 		Payload:  invokePayload,
 		Sigs:     make([]types.Sig, 0, 0),
 	}
@@ -202,6 +202,7 @@ func Transfer(gasPrice uint, gasLimit uint, senderWIF string, asset string, toAd
 }
 
 func signToData(data []byte, signer *account.Account) ([]byte, error) {
+
 	s, err := sig.Sign(signer.SigScheme, signer.PrivateKey, data, nil)
 	if err != nil {
 		return nil, err
@@ -275,7 +276,7 @@ func WithdrawONG(gasPrice uint, gasLimit uint, endpoint string, wif string) (*Ra
 		GasPrice: gasPriceUint64,
 		GasLimit: gasLimitUint64,
 		TxType:   types.Invoke,
-		Nonce:    rand.Uint32(),
+		Nonce:    uint32(time.Now().Unix()),
 		Payload:  invokePayload,
 		Sigs:     make([]types.Sig, 0, 0),
 	}
