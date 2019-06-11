@@ -14,6 +14,7 @@ import (
 	sig "github.com/ontio/ontology-crypto/signature"
 	"github.com/ontio/ontology/account"
 	"github.com/ontio/ontology/common"
+	"github.com/ontio/ontology/core/payload"
 	"github.com/ontio/ontology/core/types"
 	"github.com/ontio/ontology/core/utils"
 	"github.com/ontio/ontology/smartcontract/service/native/ont"
@@ -174,33 +175,42 @@ func Transfer(gasPrice uint, gasLimit uint, senderWIF string, asset string, toAd
 
 	invokeCode, err := utils.BuildNativeInvokeCode(contractAddress, cversion, method, params)
 
-	mutableTx := utils.NewInvokeTransaction(invokeCode)
-	mutableTx.GasPrice = gasPriceUint64
-	mutableTx.GasLimit = gasLimitUint64
-	mutableTx.Nonce = uint32(time.Now().Unix())
-
-	tx, err := mutableTx.IntoImmutable()
-	if err != nil {
-		return nil, fmt.Errorf("[Failed to convert tx to immutable: %s]", err)
+	invokePayload := &payload.InvokeCode{
+		Code: invokeCode,
 	}
-
 	signer := sender.account
 	if signer == nil {
 		return nil, fmt.Errorf("Account is null")
 	}
+	mutableTx := &types.MutableTransaction{
+		GasPrice: gasPriceUint64,
+		GasLimit: gasLimitUint64,
+		TxType:   types.Invoke,
+		Nonce:    uint32(time.Now().Unix()),
+		Payload:  invokePayload,
+		Sigs:     make([]types.Sig, 0, 0),
+	}
 
-	err = signToTransaction(tx, signer)
+	err = signTransaction(mutableTx, signer)
 	if err != nil {
+		log.Printf("SignTransaction error: %s", err)
+		return nil, err
+	}
+
+	immutTx, err := mutableTx.IntoImmutable()
+
+	if err != nil {
+		log.Printf("IntoImmutable error: %s", err)
 		return nil, err
 	}
 
 	var buffer bytes.Buffer
-	err = tx.Serialize(&buffer)
+	err = immutTx.Serialize(&buffer)
 	if err != nil {
 		return nil, fmt.Errorf("Serialize error:%s", err)
 	}
 
-	hash := tx.Hash()
+	hash := immutTx.Hash()
 	raw := &RawTransaction{
 		TXID: hash.ToHexString(),
 		Data: buffer.Bytes(),
@@ -208,24 +218,8 @@ func Transfer(gasPrice uint, gasLimit uint, senderWIF string, asset string, toAd
 	return raw, nil
 }
 
-func signToTransaction(tx *types.Transaction, signer *account.Account) error {
-	tx.Payer = signer.Address
-	txHash := tx.Hash()
-	sigData, err := signToData(txHash.ToArray(), signer)
-	if err != nil {
-		return fmt.Errorf("signToData error:%s", err)
-	}
-
-	sig := types.RawSig{
-		Invoke: keypair.SerializePublicKey(signer.PublicKey),
-		Verify: sigData,
-	}
-	tx.Sigs = []types.RawSig{sig}
-
-	return nil
-}
-
 func signToData(data []byte, signer *account.Account) ([]byte, error) {
+
 	s, err := sig.Sign(signer.SigScheme, signer.PrivateKey, data, nil)
 	if err != nil {
 		return nil, err
@@ -300,27 +294,39 @@ func WithdrawONG(gasPrice uint, gasLimit uint, endpoint string, wif string) (*Ra
 		return nil, fmt.Errorf("build invoke code error:%s", err)
 	}
 
-	mutableTx := utils.NewInvokeTransaction(invokeCode)
-	mutableTx.GasPrice = gasPriceUint64
-	mutableTx.GasLimit = gasLimitUint64
-	mutableTx.Nonce = uint32(time.Now().Unix())
-	tx, err := mutableTx.IntoImmutable()
-	if err != nil {
-		return nil, fmt.Errorf("[Failed to convert tx to immutable: %s]", err)
+	invokePayload := &payload.InvokeCode{
+		Code: invokeCode,
 	}
 
-	err = signToTransaction(tx, signer)
+	mutableTx := &types.MutableTransaction{
+		GasPrice: gasPriceUint64,
+		GasLimit: gasLimitUint64,
+		TxType:   types.Invoke,
+		Nonce:    uint32(time.Now().Unix()),
+		Payload:  invokePayload,
+		Sigs:     make([]types.Sig, 0, 0),
+	}
+
+	err = signTransaction(mutableTx, signer)
 	if err != nil {
+		log.Printf("SignTransaction error: %s", err)
+		return nil, err
+	}
+
+	immutTx, err := mutableTx.IntoImmutable()
+
+	if err != nil {
+		log.Printf("IntoImmutable error: %s", err)
 		return nil, err
 	}
 
 	var buffer bytes.Buffer
-	err = tx.Serialize(&buffer)
+	err = immutTx.Serialize(&buffer)
 	if err != nil {
 		return nil, fmt.Errorf("Serialize error:%s", err)
 	}
 
-	hash := tx.Hash()
+	hash := immutTx.Hash()
 	raw := &RawTransaction{
 		TXID: hash.ToHexString(),
 		Data: buffer.Bytes(),
