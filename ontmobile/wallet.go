@@ -191,7 +191,7 @@ func Transfer(gasPrice uint, gasLimit uint, senderWIF string, asset string, toAd
 		Sigs:     make([]types.Sig, 0, 0),
 	}
 
-	err = signTransaction(mutableTx, signer)
+	err = signTransaction(mutableTx, signer, fromAddress)
 	if err != nil {
 		log.Printf("SignTransaction error: %s", err)
 		return nil, err
@@ -307,7 +307,7 @@ func WithdrawONG(gasPrice uint, gasLimit uint, endpoint string, wif string) (*Ra
 		Sigs:     make([]types.Sig, 0, 0),
 	}
 
-	err = signTransaction(mutableTx, signer)
+	err = signTransaction(mutableTx, signer, fromAddress.ToBase58())
 	if err != nil {
 		log.Printf("SignTransaction error: %s", err)
 		return nil, err
