@@ -13,10 +13,11 @@ import (
 	"github.com/ontio/ontology/common"
 	"github.com/ontio/ontology/core/types"
 
+	"time"
+
 	"github.com/ontio/ontology/core/payload"
 	cutils "github.com/ontio/ontology/core/utils"
 	"github.com/ontio/ontology/vm/neovm"
-	"time"
 )
 
 type ParameterJSONArrayForm struct {
@@ -49,9 +50,11 @@ func buildParameters(argString string) []interface{} {
 		} else if t == "String" {
 			p = v.(string)
 		} else if t == "Integer" {
-			p = v.(uint)
+			p = uint(v.(float64))
 		} else if t == "Fixed8" {
-			p = uint64(RoundFixed(v.(float64), ONGDECIMALS) * float64(math.Pow10(ONGDECIMALS)))
+			p = uint(RoundFixed(v.(float64), 8) * float64(math.Pow10(8)))
+		} else if t == "Fixed9" {
+			p = uint(RoundFixed(v.(float64), ONGDECIMALS) * float64(math.Pow10(ONGDECIMALS)))
 		} else if t == "Array" {
 			p = buildParameters(v.(string))
 		}
@@ -62,24 +65,27 @@ func buildParameters(argString string) []interface{} {
 }
 
 // BuildInvocationTransaction : creates a raw transaction
-func BuildInvocationTransaction(contractHex string, operation string, argString string, gasPrice uint, gasLimit uint, wif string) (string, error) {
+func BuildInvocationTransaction(contractHex string, operation string, argString string, gasPrice uint, gasLimit uint, wif string, payer string) (string, error) {
 	var contractAddress common.Address
 	contractAddress, err := common.AddressFromHexString(contractHex)
 	if err != nil {
 		return "", fmt.Errorf("[Invalid contract hash error: %s]", err)
 	}
-
-	signer := ONTAccountWithWIF(wif).account
+	account := ONTAccountWithWIF(wif)
+	if account == nil {
+		return "", fmt.Errorf("[Invalid wif]")
+	}
+	signer := account.account
 	parameters := buildParameters(argString)
 	params := []interface{}{operation, parameters}
 
 	tx, err := newNeovmInvokeTransaction(uint64(gasPrice), uint64(gasLimit), contractAddress, params)
 	if err != nil {
-		log.Printf("NewNeovmInvokeTransaction error:%s", err)
+		log.Printf("NewNeovmInvokeTransaction error: %s", err)
 		return "", err
 	}
 
-	err = signTransaction(tx, signer)
+	err = signTransaction(tx, signer, payer)
 	if err != nil {
 		log.Printf("SignTransaction error: %s", err)
 		return "", err
@@ -103,9 +109,12 @@ func BuildInvocationTransaction(contractHex string, operation string, argString 
 	return txData, nil
 }
 
-func signTransaction(tx *types.MutableTransaction, signer *account.Account) error {
+func signTransaction(tx *types.MutableTransaction, signer *account.Account, payer string) error {
 	if tx.Payer == common.ADDRESS_EMPTY {
-		tx.Payer = signer.Address
+		addr, err := common.AddressFromBase58(payer)
+		if err == nil {
+			tx.Payer = addr
+		}
 	}
 	txHash := tx.Hash()
 
@@ -128,7 +137,7 @@ func newNeovmInvokeTransaction(gasPrice, gasLimit uint64, contractAddress common
 	if err != nil {
 		return nil, err
 	}
-	return newSmartContractTransaction(gasPrice, gasLimit, invokeCode)
+	return NewSmartContractTransaction(gasPrice, gasLimit, invokeCode)
 }
 
 func buildNeoVMInvokeCode(smartContractAddress common.Address, params []interface{}) ([]byte, error) {
@@ -142,7 +151,7 @@ func buildNeoVMInvokeCode(smartContractAddress common.Address, params []interfac
 	return args, nil
 }
 
-func newSmartContractTransaction(gasPrice, gasLimit uint64, invokeCode []byte) (*types.MutableTransaction, error) {
+func NewSmartContractTransaction(gasPrice, gasLimit uint64, invokeCode []byte) (*types.MutableTransaction, error) {
 	invokePayload := &payload.InvokeCode{
 		Code: invokeCode,
 	}
