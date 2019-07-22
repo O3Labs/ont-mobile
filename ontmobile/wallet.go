@@ -64,18 +64,35 @@ func NewONTAccount() *ONTAccount {
 
 func ONTAddressFromPublicKey(publicKeyBytes []byte) string {
 	publicKey, err := keypair.DeserializePublicKey(publicKeyBytes)
-	if err != nil {
+	if err != nil || publicKey == nil {
 		return ""
 	}
 	address := types.AddressFromPubKey(publicKey)
 	return address.ToBase58()
 }
 
+func ONTAccountWithPrivateKey(privateKeyBytes []byte) *ONTAccount {
+	pri, err := keypair.DeserializePrivateKey(privateKeyBytes)
+	if err != nil || pri == nil {
+		return nil
+	}
+	pub := pri.Public()
+	address := types.AddressFromPubKey(pub)
+	account := &account.Account{
+		SigScheme:  sig.SHA256withECDSA,
+		PrivateKey: pri,
+		PublicKey:  pub,
+		Address:    address,
+	}
+
+	return accountToLocalAccount(account)
+}
+
 func ONTAccountWithWIF(wif string) *ONTAccount {
 	var err error
 
 	pri, err := keypair.WIF2Key([]byte(wif))
-	if err != nil {
+	if err != nil || pri == nil {
 		return nil
 	}
 	pub := pri.Public()
@@ -175,6 +192,7 @@ func Transfer(gasPrice uint, gasLimit uint, senderWIF string, asset string, toAd
 	}
 
 	err = signTransaction(mutableTx, signer, signer.Address.ToBase58())
+
 	if err != nil {
 		log.Printf("SignTransaction error: %s", err)
 		return nil, err
@@ -221,6 +239,15 @@ func SendRawTransaction(endpoint string, rawTransactionHex string) (string, erro
 		return "", err
 	}
 	return response.Result, nil
+}
+
+func SendPreExecRawTransaction(endpoint string, rawTransactionHex string) (string, error) {
+	client := ontrpc.NewRPCClient(endpoint)
+	response, err := client.SendPreExecRawTransaction(rawTransactionHex)
+	if err != nil {
+		return "", err
+	}
+	return response.Result.Result, nil
 }
 
 func WithdrawONG(gasPrice uint, gasLimit uint, endpoint string, wif string) (*RawTransaction, error) {
