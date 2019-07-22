@@ -40,11 +40,31 @@ type GetSmartCodeEventResponse struct {
 
 type SendRawTransactionResponse struct {
 	JSONRPCResponse
+	//this is when we send 0
+	Result string `json:"result"`
+}
+
+type SendPreExecRawTransactionResponse struct {
+	JSONRPCResponse
 	//this is when we send 1
-	// Result struct {
-	// 	State  int    `json:"State"`
-	// 	Gas    int    `json:"Gas"`
-	// 	Result string `json:"Result"`
-	// } `json:"result"`
+	Result struct {
+		State  int    `json:"State"`
+		Gas    int    `json:"Gas"`
+		Result string `json:"Result"`
+	} `json:"result"`
+}
+
+type GetStorageResponse struct {
+	JSONRPCResponse
+	Result string `json:"result"`
+}
+
+type GetRawTransactionResponse struct {
+	JSONRPCResponse
+	Result string `json:"result"`
+}
+
+type GetBlockResponse struct {
+	JSONRPCResponse
 	Result string `json:"result"`
 }

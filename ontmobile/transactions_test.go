@@ -24,7 +24,7 @@ func TestBuildTransaction(t *testing.T) {
 	gasPrice := uint(500)
 	gasLimit := uint(20000)
 
-	txData, err := ont.BuildInvocationTransaction("c168e0fb1a2bddcd385ad013c2c98358eca5d4dc", "put", argString, gasPrice, gasLimit, wif)
+	txData, err := ont.BuildInvocationTransaction("c168e0fb1a2bddcd385ad013c2c98358eca5d4dc", "put", argString, gasPrice, gasLimit, wif, address)
 	if err != nil {
 		log.Printf("Error creating invocation transaction: %s", err)
 		t.Fail()
