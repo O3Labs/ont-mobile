@@ -1,7 +1,6 @@
 package ontmobile
 
 import (
-	"bytes"
 	"encoding/hex"
 	"fmt"
 	"log"
@@ -65,14 +64,10 @@ func MakeRegister(gasPrice uint, gasLimit uint, ontidWif string, payerWif string
 		return "", fmt.Errorf("[Failed to convert tx to immutable: %s]", err)
 	}
 
-	var buffer bytes.Buffer
-	err = tx.Serialize(&buffer)
-	if err != nil {
-		log.Printf("Serialize error:%s", err)
-		return "", err
-	}
+	sink := common.NewZeroCopySink(nil)
+	tx.Serialization(sink)
 
-	txData := hex.EncodeToString(buffer.Bytes())
+	txData := hex.EncodeToString(sink.Bytes())
 	return txData, nil
 }
 
@@ -94,14 +89,10 @@ func BuildGetDDO(ontid string) (string, error) {
 		return "", fmt.Errorf("[Failed to convert tx to immutable: %s]", err)
 	}
 
-	var buffer bytes.Buffer
-	err = tx.Serialize(&buffer)
-	if err != nil {
-		log.Printf("Serialize error:%s", err)
-		return "", err
-	}
+	sink := common.NewZeroCopySink(nil)
+	tx.Serialization(sink)
 
-	txData := hex.EncodeToString(buffer.Bytes())
+	txData := hex.EncodeToString(sink.Bytes())
 	return txData, nil
 }
 

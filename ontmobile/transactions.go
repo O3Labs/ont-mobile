@@ -98,14 +98,10 @@ func BuildInvocationTransaction(contractHex string, operation string, argString 
 		return "", err
 	}
 
-	var buffer bytes.Buffer
-	err = immutTx.Serialize(&buffer)
-	if err != nil {
-		log.Printf("Serialize error:%s", err)
-		return "", err
-	}
+	sink := common.NewZeroCopySink(nil)
+	immutTx.Serialization(sink)
 
-	txData := hex.EncodeToString(buffer.Bytes())
+	txData := hex.EncodeToString(sink.Bytes())
 	return txData, nil
 }
 
@@ -158,7 +154,7 @@ func NewSmartContractTransaction(gasPrice, gasLimit uint64, invokeCode []byte) (
 	tx := &types.MutableTransaction{
 		GasPrice: gasPrice,
 		GasLimit: gasLimit,
-		TxType:   types.Invoke,
+		TxType:   types.InvokeNeo,
 		Nonce:    uint32(time.Now().Unix()),
 		Payload:  invokePayload,
 		Sigs:     nil,

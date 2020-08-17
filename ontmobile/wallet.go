@@ -1,7 +1,6 @@
 package ontmobile
 
 import (
-	"bytes"
 	"fmt"
 	"log"
 	"math"
@@ -185,7 +184,7 @@ func Transfer(gasPrice uint, gasLimit uint, senderWIF string, asset string, toAd
 	mutableTx := &types.MutableTransaction{
 		GasPrice: gasPriceUint64,
 		GasLimit: gasLimitUint64,
-		TxType:   types.Invoke,
+		TxType:   types.InvokeNeo,
 		Nonce:    uint32(time.Now().Unix()),
 		Payload:  invokePayload,
 		Sigs:     make([]types.Sig, 0, 0),
@@ -205,16 +204,13 @@ func Transfer(gasPrice uint, gasLimit uint, senderWIF string, asset string, toAd
 		return nil, err
 	}
 
-	var buffer bytes.Buffer
-	err = immutTx.Serialize(&buffer)
-	if err != nil {
-		return nil, fmt.Errorf("Serialize error:%s", err)
-	}
+	sink := common.NewZeroCopySink(nil)
+	immutTx.Serialization(sink)
 
 	hash := immutTx.Hash()
 	raw := &RawTransaction{
 		TXID: hash.ToHexString(),
-		Data: buffer.Bytes(),
+		Data: sink.Bytes(),
 	}
 	return raw, nil
 }
@@ -302,7 +298,7 @@ func WithdrawONG(gasPrice uint, gasLimit uint, endpoint string, wif string) (*Ra
 	mutableTx := &types.MutableTransaction{
 		GasPrice: gasPriceUint64,
 		GasLimit: gasLimitUint64,
-		TxType:   types.Invoke,
+		TxType:   types.InvokeNeo,
 		Nonce:    uint32(time.Now().Unix()),
 		Payload:  invokePayload,
 		Sigs:     make([]types.Sig, 0, 0),
@@ -321,16 +317,13 @@ func WithdrawONG(gasPrice uint, gasLimit uint, endpoint string, wif string) (*Ra
 		return nil, err
 	}
 
-	var buffer bytes.Buffer
-	err = immutTx.Serialize(&buffer)
-	if err != nil {
-		return nil, fmt.Errorf("Serialize error:%s", err)
-	}
+	sink := common.NewZeroCopySink(nil)
+	immutTx.Serialization(sink)
 
 	hash := immutTx.Hash()
 	raw := &RawTransaction{
 		TXID: hash.ToHexString(),
-		Data: buffer.Bytes(),
+		Data: sink.Bytes(),
 	}
 	return raw, nil
 }

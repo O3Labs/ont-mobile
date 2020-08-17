@@ -1,7 +1,6 @@
 package ontmobile
 
 import (
-	"bytes"
 	"encoding/hex"
 	"log"
 	"testing"
@@ -54,13 +53,11 @@ func TestSerializeInvoke(t *testing.T) {
 		return
 	}
 	log.Printf("%+v", tx.Sigs)
-	var buffer bytes.Buffer
-	err = immutTx.Serialize(&buffer)
-	if err != nil {
-		log.Printf("serialize error:%s", err)
-		return
-	}
-	txData := hex.EncodeToString(buffer.Bytes())
+
+	sink := common.NewZeroCopySink(nil)
+	immutTx.Serialization(sink)
+
+	txData := hex.EncodeToString(sink.Bytes())
 
 	log.Printf("%v", txData)
 }
@@ -105,13 +102,9 @@ func TestGetRyuCoin(t *testing.T) {
 		return
 	}
 
-	var buffer bytes.Buffer
-	err = immutTx.Serialize(&buffer)
-	if err != nil {
-		log.Printf("serialize error:%s", err)
-		return
-	}
-	txData := hex.EncodeToString(buffer.Bytes())
+	sink := common.NewZeroCopySink(nil)
+	immutTx.Serialization(sink)
+	txData := hex.EncodeToString(sink.Bytes())
 
 	log.Printf("%v", txData)
 }
